@@ -76,17 +76,21 @@ int encontrarPrimerElementoMaximaDistancia(Eigen::MatrixXd matrizDistancias){
 
 int encontrarSiguienteElementoMaximaDistancia(Eigen::MatrixXd matrizDistancias, Eigen::ArrayXi vectorSolucion, int &posicion){
 
-
-    int mejorElemento = -1;
     Eigen::ArrayXi vectorDistancias(matrizDistancias.cols());
 
     for (int i = 0; i <= posicion; ++i){
-
         for (int j = 0; j < matrizDistancias.cols(); ++j){
             vectorDistancias(j) += matrizDistancias(i,j);
         }
-
     }
+    // En el vector de distancias estan las distancias acumuladas.
+    // Elegimos el maximo del vector, que nos va a decir el siguiente elemento a anadir en cuestion.
+
+    // Obtenemos el maximo
+    Eigen::ArrayXi::Index indiceMaximo;
+    vectorDistancias.maxCoeff(&indiceMaximo);
+    int indice = indiceMaximo;
+    return indice;
 }
 
 
@@ -102,10 +106,11 @@ int main() {
     int primerElemento = encontrarPrimerElementoMaximaDistancia(matrizDistancias);
 
     vectorSolucion << primerElemento;
+
     int posicion = 1;
 
     for (int i = 1; vectorSolucion.size(); i++){
-        vectorSolucion << encontrarSiguienteElementoMaximaDistancia(matrizDistancias, vectorSolucion, &posicion);
+        cout << encontrarSiguienteElementoMaximaDistancia(matrizDistancias, vectorSolucion, posicion);
     }
 
 
