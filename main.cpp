@@ -6,11 +6,63 @@
  * 3: Representación y guardado de datos.
  */
 
-#include <iostream>
-
 using namespace std;
 
+#include <iostream>
+#include <fstream>
+#include "Eigen/Dense"
+
+Eigen::MatrixXd generarMatrizDistanciasAleatoria(string, int n, int m){
+    // TODO Generamos la semilla a partir de lo que hay en el archivo.
+    // A partir del archivo, llenamos la matriz de n*n de distancias.
+    Eigen::MatrixXd(n,n);
+}
+
+Eigen::MatrixXd generarMatrizDistancias(string archivo){
+
+    int n, m;
+    int f, c;
+    Eigen::MatrixXd matrizDistancias;
+
+    ifstream lectura;
+    lectura.open(archivo, ios::out | ios::in);
+
+    if (lectura.is_open())
+    {
+
+        float distancia;
+
+        // Guardamos el tamaño de la matriz y el subconjunto en ambas variables.
+        lectura >> n;
+        lectura >> m;
+        matrizDistancias.resize(n,n);
+
+
+        while (!lectura.eof()){
+            lectura >> f;
+            lectura >> c;
+            lectura >> distancia;
+
+            matrizDistancias(f,c) = distancia;
+            matrizDistancias(c,f) = distancia;
+        }
+    }
+    else
+    {
+        cout << "El archivo no pudo ser abierto." << endl;
+    }
+    lectura.close();
+
+    return matrizDistancias;
+}
+
 int main() {
-    std::cout << "Hello, World!" << std::endl;
-    return 0;
+    // Lo primero que debemos hacer es obtener los datos de la matriz dada en los archivos de tablas.
+    // Probaremos que obtenemos los resultados deseados.
+
+    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-a_1_n500_m50.txt");
+    for (int i = 0 ; i < matrizDistancias.cols(); ++i){
+        cout << matrizDistancias(1, i) << " ";
+    }
+
 }
