@@ -52,7 +52,7 @@ Eigen::MatrixXd generarMatrizDistancias(string archivo, int &size){
     return matrizDistancias;
 }
 
-int encontrarElementoMaximaDistancia(Eigen::MatrixXd matrizDistancias){
+int encontrarPrimerElementoMaximaDistancia(Eigen::MatrixXd matrizDistancias){
 
     int posicionMejor = -1;
     double distanciaMejor = 0.0;
@@ -73,6 +73,23 @@ int encontrarElementoMaximaDistancia(Eigen::MatrixXd matrizDistancias){
     }
     return posicionMejor;
 }
+
+int encontrarSiguienteElementoMaximaDistancia(Eigen::MatrixXd matrizDistancias, Eigen::ArrayXi vectorSolucion, int &posicion){
+
+
+    int mejorElemento = -1;
+    Eigen::ArrayXi vectorDistancias(matrizDistancias.cols());
+
+    for (int i = 0; i <= posicion; ++i){
+
+        for (int j = 0; j < matrizDistancias.cols(); ++j){
+            vectorDistancias(j) += matrizDistancias(i,j);
+        }
+
+    }
+}
+
+
 int main() {
     // Lo primero que debemos hacer es obtener los datos de la matriz dada en los archivos de tablas.
     // Probaremos que obtenemos los resultados deseados.
@@ -82,8 +99,14 @@ int main() {
     Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-a_1_n500_m50.txt", size);
     Eigen::ArrayXi vectorSolucion(size);
 
-    int primerElemento = encontrarElementoMaximaDistancia(matrizDistancias);
-    cout << primerElemento;
+    int primerElemento = encontrarPrimerElementoMaximaDistancia(matrizDistancias);
+
+    vectorSolucion << primerElemento;
+    int posicion = 1;
+
+    for (int i = 1; vectorSolucion.size(); i++){
+        vectorSolucion << encontrarSiguienteElementoMaximaDistancia(matrizDistancias, vectorSolucion, &posicion);
+    }
 
 
 }
