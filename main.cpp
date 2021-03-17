@@ -12,13 +12,8 @@ using namespace std;
 #include <fstream>
 #include "Eigen/Dense"
 
-Eigen::MatrixXd generarMatrizDistanciasAleatoria(string, int n, int m){
-    // TODO Generamos la semilla a partir de lo que hay en el archivo.
-    // A partir del archivo, llenamos la matriz de n*n de distancias.
-    Eigen::MatrixXd(n,n);
-}
 
-Eigen::MatrixXd generarMatrizDistancias(string archivo){
+Eigen::MatrixXd generarMatrizDistancias(string archivo, int &size){
 
     int n, m;
     int f, c;
@@ -35,6 +30,7 @@ Eigen::MatrixXd generarMatrizDistancias(string archivo){
         // Guardamos el tamaño de la matriz y el subconjunto en ambas variables.
         lectura >> n;
         lectura >> m;
+        size = m;
         matrizDistancias.resize(n,n);
 
 
@@ -60,9 +56,12 @@ int main() {
     // Lo primero que debemos hacer es obtener los datos de la matriz dada en los archivos de tablas.
     // Probaremos que obtenemos los resultados deseados.
 
-    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-a_1_n500_m50.txt");
-    for (int i = 0 ; i < matrizDistancias.cols(); ++i){
-        cout << matrizDistancias(1, i) << " ";
-    }
+    int size; // Tamanio del subconjunto.
+
+    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-a_1_n500_m50.txt", size);
+    Eigen::ArrayXi vectorSolucion(size);
+
+    int primerElemento = encontrarPrimerElemento ()
+
 
 }
