@@ -134,7 +134,7 @@ int main() {
 
     int tam; // Tamanio del subconjunto.
 
-    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-c_20_n3000_m600.txt", tam);
+    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-b_30_n2000_m200.txt", tam);
     Eigen::MatrixXd matrizDistanciasOperadas = matrizDistancias;
     Eigen::ArrayXi vectorSolucion(tam);
 
