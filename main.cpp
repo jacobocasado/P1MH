@@ -116,7 +116,7 @@ void encontrarSiguienteElementoMaximaDistancia(Eigen::MatrixXd &matrizDistancias
 
 }
 
-double calcularCosteTotal(Eigen::ArrayXi vectorSolucion,Eigen::MatrixXd matrizDistancias){
+double calcularCosteTotal(Eigen::ArrayXi vectorSolucion,Eigen::MatrixXd &matrizDistancias){
 
     double distanciaTotal = 0.0;
 
@@ -137,13 +137,15 @@ int main() {
     cout.setf(ios::fixed);
     int tam; // Tamanio del subconjunto.
 
-    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-a_1_n500_m50.txt", tam);
+    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-c_1_n3000_m300.txt", tam);
     Eigen::MatrixXd matrizDistanciasOperadas = matrizDistancias;
     Eigen::ArrayXi vectorSolucion(tam);
 
-    int primerElemento = encontrarPrimerElementoMaximaDistancia(matrizDistanciasOperadas);
-
     vectorSolucion.fill(0);
+
+    auto start = std::chrono::system_clock::now();
+
+    int primerElemento = encontrarPrimerElementoMaximaDistancia(matrizDistanciasOperadas);
     vectorSolucion(0)  = primerElemento;
 
     int aniadidos = 1;
@@ -151,7 +153,12 @@ int main() {
     while (aniadidos < tam)
         encontrarSiguienteElementoMaximaDistancia(matrizDistanciasOperadas, vectorSolucion, aniadidos);
 
-    cout << calcularCosteTotal(vectorSolucion, matrizDistancias);
+    double costeTotalGreedy = calcularCosteTotal(vectorSolucion, matrizDistancias);
+    cout << "Coste Total con Greedy: " << costeTotalGreedy << endl;
+
+    auto end = std::chrono::system_clock::now();
+    chrono::duration<double, milli> duration = end - start;
+    cout << "Tiempo de cálculo: " << duration.count() << " millisec" << endl;
 
 
 }
