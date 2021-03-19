@@ -11,6 +11,8 @@ using namespace std;
 #include <iostream>
 #include <fstream>
 #include <chrono>
+#include <iterator>
+#include <set>
 #include "Eigen/Dense"
 
 
@@ -36,7 +38,7 @@ Eigen::MatrixXd generarMatrizDistancias(string archivo, int &size){
     if (lectura.is_open())
     {
 
-        float distancia;
+        double distancia;
 
         // Guardamos el tamaño de la matriz y el subconjunto en ambas variables.
         lectura >> n;
@@ -87,9 +89,11 @@ int encontrarPrimerElementoMaximaDistancia(Eigen::MatrixXd &matrizDistancias){
     return posicionMejor;
 }
 
-void encontrarSiguienteElementoMaximaDistancia(Eigen::MatrixXd &matrizDistancias, Eigen::ArrayXi &vectorSolucion, int &aniadidos){
+void encontrarSiguienteElementoMaximaDistancia(Eigen::MatrixXd &matrizDistancias, Eigen::ArrayXi &vectorSolucion, int &aniadidos, int tam){
 
-    Eigen::ArrayXi vectorDistancias(matrizDistancias.rows());
+    int filas = matrizDistancias.rows();
+
+    Eigen::ArrayXi vectorDistancias(filas);
     vectorDistancias.fill(0);
 
     int posicionMejor = -1;
@@ -98,7 +102,7 @@ void encontrarSiguienteElementoMaximaDistancia(Eigen::MatrixXd &matrizDistancias
 
 
 
-        for (int j = 0; j < matrizDistancias.rows(); ++j){
+        for (int j = 0; j < filas; ++j){
             distanciaActual = 0;
             for (int i = 0; i < aniadidos; ++i){
                 distanciaActual += matrizDistancias(j, vectorSolucion(i));
@@ -108,37 +112,6 @@ void encontrarSiguienteElementoMaximaDistancia(Eigen::MatrixXd &matrizDistancias
                  distanciaMejor = distanciaActual;
              }
         }
-
-    ponerACeroFila(matrizDistancias, posicionMejor);
-
-    vectorSolucion(aniadidos) = posicionMejor;
-    aniadidos++;
-
-}
-
-void encontrarSiguienteElementoMaximaDistancia2(Eigen::MatrixXd &matrizDistancias, Eigen::ArrayXi &vectorSolucion, int &aniadidos){
-
-    Eigen::ArrayXi vectorDistancias(matrizDistancias.rows());
-    vectorDistancias.fill(0);
-
-    int posicionMejor = -1;
-    double distanciaMejor = 0.0;
-    double distanciaMinimaElementoActual;
-
-
-    for (int j = 0; j < matrizDistancias.rows(); ++j){
-        distanciaMinimaElementoActual = 100;
-        for (int i = 0; i < aniadidos; ++i){
-            if (matrizDistancias(j, vectorSolucion(i)) < distanciaMinimaElementoActual){
-                distanciaMinimaElementoActual = matrizDistancias(j, vectorSolucion(i));
-            }
-        }
-
-        if (distanciaMinimaElementoActual > distanciaMejor){
-            posicionMejor = j;
-            distanciaMejor = distanciaMinimaElementoActual;
-        }
-    }
 
     ponerACeroFila(matrizDistancias, posicionMejor);
 
@@ -163,17 +136,22 @@ double calcularCosteTotal(Eigen::ArrayXi vectorSolucion,Eigen::MatrixXd &matrizD
 double calcularCosteGreedy(Eigen::MatrixXd &matrizDistancias, Eigen::MatrixXd &matrizDistanciasOperadas, int tam ){
 
     Eigen::ArrayXi vectorSolucion(tam);
-    vectorSolucion.fill(0);
+    // vectorSolucion.fill(0);
+
+        set<int, greater<int> > setSolucion;
+
 
     auto start = std::chrono::system_clock::now();
 
     int primerElemento = encontrarPrimerElementoMaximaDistancia(matrizDistanciasOperadas);
     vectorSolucion(0)  = primerElemento;
 
+        setSolucion.insert(primerElemento);
+
     int aniadidos = 1;
 
     while (aniadidos < tam)
-        encontrarSiguienteElementoMaximaDistancia(matrizDistanciasOperadas, vectorSolucion, aniadidos);
+        encontrarSiguienteElementoMaximaDistancia(matrizDistanciasOperadas, vectorSolucion, aniadidos, tam);
 
     double costeTotalGreedy = calcularCosteTotal(vectorSolucion, matrizDistancias);
 
@@ -184,29 +162,6 @@ double calcularCosteGreedy(Eigen::MatrixXd &matrizDistancias, Eigen::MatrixXd &m
     cout << "Tiempo de cálculo: " << duration.count() << " segundos" << endl;
 }
 
-double calcularCosteGreedy2(Eigen::MatrixXd &matrizDistancias, Eigen::MatrixXd &matrizDistanciasOperadas, int tam ){
-
-    Eigen::ArrayXi vectorSolucion(tam);
-    vectorSolucion.fill(0);
-
-    auto start = std::chrono::system_clock::now();
-
-    int primerElemento = encontrarPrimerElementoMaximaDistancia(matrizDistanciasOperadas);
-    vectorSolucion(0)  = primerElemento;
-
-    int aniadidos = 1;
-
-    while (aniadidos < tam)
-        encontrarSiguienteElementoMaximaDistancia2(matrizDistanciasOperadas, vectorSolucion, aniadidos);
-
-    double costeTotalGreedy = calcularCosteTotal(vectorSolucion, matrizDistancias);
-
-    auto end = std::chrono::system_clock::now();
-    chrono::duration<double> duration = end - start;
-
-    cout << "Coste Total con Greedy: " << costeTotalGreedy << endl;
-    cout << "Tiempo de cálculo: " << duration.count() << " segundos" << endl;
-}
 
 int main() {
     // Lo primero que debemos hacer es obtener los datos de la matriz dada en los archivos de tablas.
@@ -215,11 +170,9 @@ int main() {
     cout.setf(ios::fixed);
     int tam; // Tamanio del subconjunto.
 
-    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-a_1_n500_m50.txt", tam);
-
+    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-c_15_n3000_m500.txt", tam);
     Eigen::MatrixXd matrizDistanciasOperadas = matrizDistancias;
-    Eigen::MatrixXd matrizDistanciasOperadas2 = matrizDistancias;
 
     calcularCosteGreedy(matrizDistancias, matrizDistanciasOperadas, tam);
-    calcularCosteGreedy2(matrizDistancias, matrizDistanciasOperadas2, tam);
+
 }
