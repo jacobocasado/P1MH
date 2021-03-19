@@ -89,23 +89,20 @@ int encontrarPrimerElementoMaximaDistancia(Eigen::MatrixXd &matrizDistancias){
     return posicionMejor;
 }
 
-void encontrarSiguienteElementoMaximaDistancia(Eigen::MatrixXd &matrizDistancias, Eigen::ArrayXi &vectorSolucion, int &aniadidos, int tam){
+void encontrarSiguienteElementoMaximaDistancia(Eigen::MatrixXd &matrizDistancias, set<int, greater<int> > &setSolucion, int &aniadidos, int tam){
 
     int filas = matrizDistancias.rows();
-
-    Eigen::ArrayXi vectorDistancias(filas);
-    vectorDistancias.fill(0);
-
+    
     int posicionMejor = -1;
     double distanciaMejor = 0.0;
     double distanciaActual;
+    set<int, greater<int> >::iterator itr;
 
 
-
-        for (int j = 0; j < filas; ++j){
+    for (int j = 0; j < filas; ++j){
             distanciaActual = 0;
-            for (int i = 0; i < aniadidos; ++i){
-                distanciaActual += matrizDistancias(j, vectorSolucion(i));
+            for (itr = setSolucion.begin(); itr != setSolucion.end(); itr++){
+                distanciaActual += matrizDistancias(j, *itr);
             }
              if (distanciaActual > distanciaMejor){
                  posicionMejor = j;
@@ -115,18 +112,21 @@ void encontrarSiguienteElementoMaximaDistancia(Eigen::MatrixXd &matrizDistancias
 
     ponerACeroFila(matrizDistancias, posicionMejor);
 
-    vectorSolucion(aniadidos) = posicionMejor;
+    setSolucion.insert(posicionMejor);
     aniadidos++;
 
 }
 
-double calcularCosteTotal(Eigen::ArrayXi vectorSolucion,Eigen::MatrixXd &matrizDistancias){
+double calcularCosteTotal(set<int, greater<int> > setSolucion, Eigen::MatrixXd &matrizDistancias){
 
     double distanciaTotal = 0.0;
 
-    for (int i = 0; i < vectorSolucion.size(); ++i){
-        for (int j = i+1; j < vectorSolucion.size(); ++j){
-            distanciaTotal += matrizDistancias(vectorSolucion(i),vectorSolucion(j));
+    set<int, greater<int> >::iterator itr;
+    set<int, greater<int> >::iterator itr2;
+
+    for (itr = setSolucion.begin(); itr != setSolucion.end(); itr++){
+        for (itr2 = itr; itr2 != setSolucion.end(); itr2++){
+            distanciaTotal += matrizDistancias(*itr, *itr2);
         }
     }
 
@@ -135,25 +135,21 @@ double calcularCosteTotal(Eigen::ArrayXi vectorSolucion,Eigen::MatrixXd &matrizD
 
 double calcularCosteGreedy(Eigen::MatrixXd &matrizDistancias, Eigen::MatrixXd &matrizDistanciasOperadas, int tam ){
 
-    Eigen::ArrayXi vectorSolucion(tam);
-    // vectorSolucion.fill(0);
 
-        set<int, greater<int> > setSolucion;
 
+    set<int, greater<int> > setSolucion;
 
     auto start = std::chrono::system_clock::now();
 
     int primerElemento = encontrarPrimerElementoMaximaDistancia(matrizDistanciasOperadas);
-    vectorSolucion(0)  = primerElemento;
-
-        setSolucion.insert(primerElemento);
+    setSolucion.insert(primerElemento);
 
     int aniadidos = 1;
 
     while (aniadidos < tam)
-        encontrarSiguienteElementoMaximaDistancia(matrizDistanciasOperadas, vectorSolucion, aniadidos, tam);
+        encontrarSiguienteElementoMaximaDistancia(matrizDistanciasOperadas, setSolucion, aniadidos, tam);
 
-    double costeTotalGreedy = calcularCosteTotal(vectorSolucion, matrizDistancias);
+    double costeTotalGreedy = calcularCosteTotal(setSolucion, matrizDistancias);
 
     auto end = std::chrono::system_clock::now();
     chrono::duration<double> duration = end - start;
@@ -170,7 +166,7 @@ int main() {
     cout.setf(ios::fixed);
     int tam; // Tamanio del subconjunto.
 
-    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-c_15_n3000_m500.txt", tam);
+    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-b_30_n2000_m200.txt", tam);
     Eigen::MatrixXd matrizDistanciasOperadas = matrizDistancias;
 
     calcularCosteGreedy(matrizDistancias, matrizDistanciasOperadas, tam);
