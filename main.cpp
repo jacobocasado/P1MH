@@ -10,6 +10,7 @@ using namespace std;
 
 #include <iostream>
 #include <fstream>
+#include <chrono>
 #include "Eigen/Dense"
 
 
@@ -22,7 +23,6 @@ void ponerACeroFila(Eigen::MatrixXd& matriz, unsigned int numFilaARemover)
             matriz(numFilaARemover, fila) = 0;
 
 }
-
 
 Eigen::MatrixXd generarMatrizDistancias(string archivo, int &size){
 
@@ -92,31 +92,33 @@ void encontrarSiguienteElementoMaximaDistancia(Eigen::MatrixXd &matrizDistancias
     Eigen::ArrayXi vectorDistancias(matrizDistancias.rows());
     vectorDistancias.fill(0);
 
+    int posicionMejor = -1;
+    double distanciaMejor = 0.0;
+    double distanciaActual;
 
-    for (int i = 0; i < aniadidos; ++i){
+
+
         for (int j = 0; j < matrizDistancias.rows(); ++j){
-            vectorDistancias(j) += matrizDistancias(j,vectorSolucion(i));
+            distanciaActual = 0;
+            for (int i = 0; i < aniadidos; ++i){
+                distanciaActual += matrizDistancias(j, vectorSolucion(i));
+            }
+             if (distanciaActual > distanciaMejor){
+                 posicionMejor = j;
+                 distanciaMejor = distanciaActual;
+             }
         }
-    }
 
-    // En el vector de distancias estan las distancias acumuladas.
-    // Elegimos el maximo del vector, que nos va a decir el siguiente elemento a anadir en cuestion.
+    ponerACeroFila(matrizDistancias, posicionMejor);
 
-    // Obtenemos el maximo
-    Eigen::ArrayXi::Index indiceMaximo;
-    vectorDistancias.maxCoeff(&indiceMaximo);
-    int indice = indiceMaximo;
-    ponerACeroFila(matrizDistancias, indice);
-
-    vectorSolucion(aniadidos) = indice;
+    vectorSolucion(aniadidos) = posicionMejor;
     aniadidos++;
-
 
 }
 
 double calcularCosteTotal(Eigen::ArrayXi vectorSolucion,Eigen::MatrixXd matrizDistancias){
 
-    double distanciaTotal = 0;
+    double distanciaTotal = 0.0;
 
     for (int i = 0; i < vectorSolucion.size(); ++i){
         for (int j = i+1; j < vectorSolucion.size(); ++j){
@@ -132,12 +134,12 @@ int main() {
     // Lo primero que debemos hacer es obtener los datos de la matriz dada en los archivos de tablas.
     // Probaremos que obtenemos los resultados deseados.
 
+    cout.setf(ios::fixed);
     int tam; // Tamanio del subconjunto.
 
-    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-b_30_n2000_m200.txt", tam);
+    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-a_1_n500_m50.txt", tam);
     Eigen::MatrixXd matrizDistanciasOperadas = matrizDistancias;
     Eigen::ArrayXi vectorSolucion(tam);
-
 
     int primerElemento = encontrarPrimerElementoMaximaDistancia(matrizDistanciasOperadas);
 
