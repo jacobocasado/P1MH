@@ -126,16 +126,16 @@ void encontrarSiguienteElementoMaximaDistancia2(Eigen::MatrixXd &matrizDistancia
     double distanciaMinimaElementoActual;
 
 
-    for (int j = 0; j < matrizDistancias.rows(); ++j){
-        distanciaMinimaElementoActual = 100;
-        for (int i = 0; i < aniadidos; ++i){
-            if (matrizDistancias(j, vectorSolucion(i)) < distanciaMinimaElementoActual){
-                distanciaMinimaElementoActual = matrizDistancias(j, vectorSolucion(i));
+    for (int i = 0; i < matrizDistancias.rows(); ++i){
+        distanciaMinimaElementoActual = matrizDistancias(i, vectorSolucion(0));
+        for (int j = 0; j < aniadidos; ++j){
+            if (matrizDistancias(i, vectorSolucion(j)) < distanciaMinimaElementoActual){
+                distanciaMinimaElementoActual = matrizDistancias(i, vectorSolucion(j));
             }
         }
 
         if (distanciaMinimaElementoActual > distanciaMejor){
-            posicionMejor = j;
+            posicionMejor = i;
             distanciaMejor = distanciaMinimaElementoActual;
         }
     }
@@ -215,11 +215,8 @@ int main() {
     cout.setf(ios::fixed);
     int tam; // Tamanio del subconjunto.
 
-    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-a_1_n500_m50.txt", tam);
-
-    Eigen::MatrixXd matrizDistanciasOperadas = matrizDistancias;
+    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-b_29_n2000_m200.txt", tam);
     Eigen::MatrixXd matrizDistanciasOperadas2 = matrizDistancias;
 
-    calcularCosteGreedy(matrizDistancias, matrizDistanciasOperadas, tam);
     calcularCosteGreedy2(matrizDistancias, matrizDistanciasOperadas2, tam);
 }
