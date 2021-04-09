@@ -10,17 +10,9 @@ using namespace std;
 #include <fstream>
 #include <chrono>
 #include "Eigen/Dense"
+#include "random.h"
+#include <set>
 
-
-void ponerACeroFila(Eigen::MatrixXd& matriz, unsigned int numFilaARemover)
-{
-    unsigned int numFilas = matriz.rows();
-
-    if( numFilaARemover < numFilas )
-        for (int fila = 0; fila < matriz.rows(); ++fila)
-            matriz(numFilaARemover, fila) = 0;
-
-}
 
 Eigen::MatrixXd generarMatrizDistancias(string archivo, int &size){
 
@@ -59,6 +51,36 @@ Eigen::MatrixXd generarMatrizDistancias(string archivo, int &size){
     lectura.close();
 
     return matrizDistancias;
+}
+
+int leerDeArchivo(string archivo){
+
+    ifstream lectura;
+    lectura.open(archivo, ios::out | ios::in);
+    int semilla;
+
+    if (lectura.is_open())
+    {
+        // Guardamos la semilla en la variable.
+        lectura >> semilla;
+    }
+    else
+    {
+        cout << "El archivo no pudo ser abierto." << endl;
+    }
+    lectura.close();
+
+    return semilla;
+}
+
+void ponerACeroFila(Eigen::MatrixXd& matriz, unsigned int numFilaARemover)
+{
+    unsigned int numFilas = matriz.rows();
+
+    if( numFilaARemover < numFilas )
+        for (int fila = 0; fila < matriz.rows(); ++fila)
+            matriz(numFilaARemover, fila) = 0;
+
 }
 
 int encontrarPrimerElementoMaximaDistancia(Eigen::MatrixXd &matrizDistancias){
@@ -206,6 +228,58 @@ double calcularCosteGreedy2(Eigen::MatrixXd &matrizDistancias, Eigen::MatrixXd &
     cout << "Tiempo de cálculo: " << duration.count() << " segundos" << endl;
 }
 
+double calcularCosteBusquedaLocal(Eigen::MatrixXd &matrizDistancias, Eigen::MatrixXd &matrizDistanciasOperadas, int tam){
+
+    struct elemento{
+        int posicion;
+        double diversidad;
+
+        bool operator>(const elemento & elemento) const {
+
+            if (diversidad == elemento.diversidad){
+                if (posicion > elemento.posicion)
+                    return false;
+                else
+                    return true;
+            }
+            else
+                return (diversidad > elemento.diversidad);
+        }
+
+        // El set va a ordenar con este operador.
+        bool operator<(const elemento & elemento) const {
+            if (posicion == elemento.posicion)
+                return false;
+
+            if (diversidad == elemento.diversidad)
+                return posicion < elemento.posicion;
+            else
+                return (diversidad < elemento.diversidad);
+        }
+
+        bool operator=(const elemento & elemento) const {
+            return (posicion == elemento.posicion);
+        }
+
+    };
+
+    set <elemento> setSolucion;
+
+    while (setSolucion.size() < tam){
+        elemento elemento;
+        elemento.posicion = Randint(0, matrizDistancias.cols() - 1);
+        elemento.diversidad = 0;
+        setSolucion.insert(elemento);
+        cout << "Inserto. " << setSolucion.size() << endl;
+    }
+
+    for (set<elemento>::iterator it = setSolucion.begin(); it != setSolucion.end(); ++it){
+        cout << (*it).posicion << endl;
+    }
+}
+
+double factorizarSolucion();
+
 int main() {
     // Lo primero que debemos hacer es obtener los datos de la matriz dada en los archivos de tablas.
     // Probaremos que obtenemos los resultados deseados.
@@ -213,8 +287,16 @@ int main() {
     cout.setf(ios::fixed);
     int tam; // Tamanio del subconjunto.
 
-    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-b_29_n2000_m200.txt", tam);
+    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-a_1_n500_m50.txt", tam);
+    Eigen::MatrixXd matrizDistanciasOperadas = matrizDistancias;
     Eigen::MatrixXd matrizDistanciasOperadas2 = matrizDistancias;
 
-    calcularCosteGreedy2(matrizDistancias, matrizDistanciasOperadas2, tam);
+    int semilla = leerDeArchivo("semilla.txt");
+    Set_random(semilla);
+
+    // calcularCosteGreedy(matrizDistancias, matrizDistanciasOperadas, tam);
+    // calcularCosteGreedy2(matrizDistancias, matrizDistanciasOperadas2, tam);
+
+    calcularCosteBusquedaLocal(matrizDistancias, matrizDistanciasOperadas, tam);
+
 }
