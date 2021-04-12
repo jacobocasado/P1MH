@@ -278,7 +278,7 @@ double calcularCosteGreedy2(Eigen::MatrixXd &matrizDistancias, Eigen::MatrixXd &
     chrono::duration<double> duration = end - start;
 
     cout << "Coste Total con Greedy: " << costeTotalGreedy << endl;
-    cout << "Tiempo de cálculo: " << duration.count() << " segundos" << endl;
+    cout << "Tiempo de calculo: " << duration.count() << " segundos" << endl;
 }
 
 double calcularContribucionElemento(Eigen::MatrixXd &matrizDistancias, int posicionAIncluir, int posicionAQuitar, vector<elemento> &vectorSolucion){
@@ -329,7 +329,7 @@ void refactorizarVector(Eigen::MatrixXd &matrizDistancias, vector<elemento> &vec
     }
 }
 
-vector<elemento> calcularSolucionBL(Eigen::MatrixXd &matrizDistancias, Eigen::MatrixXd &matrizDistanciasOperadas, int tam){
+vector<elemento> calcularCosteBL(Eigen::MatrixXd &matrizDistancias, Eigen::MatrixXd &matrizDistanciasOperadas, int tam){
 
     set <elemento> setSolucion;
     vector<elemento> vectorSolucion;
@@ -390,9 +390,11 @@ vector<elemento> calcularSolucionBL(Eigen::MatrixXd &matrizDistancias, Eigen::Ma
 
     auto end = std::chrono::system_clock::now();
     chrono::duration<double> duration = end - start;
-    cout << "Tiempo de calculo: " << duration.count() << " segundos" << endl;
 
-    cout << "Coste de la solucion con BL: " << calcularCosteSolucion(vectorSolucion, matrizDistancias);
+    cout << "Coste de la solucion con BL: " << calcularCosteSolucion(vectorSolucion, matrizDistancias) << endl;
+    cout << "Tiempo de calculo: " << duration.count() << " segundos" << endl << endl;
+
+
 
     return vectorSolucion;
 
@@ -413,9 +415,8 @@ int main() {
     int semilla = leerDeArchivo("semilla.txt");
     Set_random(semilla);
 
-    // calcularCosteGreedy(matrizDistancias, matrizDistanciasOperadas, tam);
-    // calcularCosteGreedy2(matrizDistancias, matrizDistanciasOperadas2, tam);
-
-    calcularSolucionBL(matrizDistancias, matrizDistanciasOperadas, tam);
+    calcularCosteGreedy(matrizDistancias, matrizDistanciasOperadas, tam);
+    calcularCosteGreedy2(matrizDistancias, matrizDistanciasOperadas2, tam);
+    calcularCosteBL(matrizDistancias, matrizDistanciasOperadas, tam);
 
 }
