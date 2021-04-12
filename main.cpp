@@ -408,7 +408,7 @@ int main() {
     cout.setf(ios::fixed);
     int tam; // Tamanio del subconjunto.
 
-    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-a_2_n500_m50.txt", tam);
+    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-a_3_n500_m50.txt", tam);
     Eigen::MatrixXd matrizDistanciasOperadas = matrizDistancias;
     Eigen::MatrixXd matrizDistanciasOperadas2 = matrizDistancias;
 
