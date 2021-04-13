@@ -329,7 +329,7 @@ void refactorizarVector(Eigen::MatrixXd &matrizDistancias, vector<elemento> &vec
     }
 }
 
-vector<elemento> calcularCosteBL(Eigen::MatrixXd &matrizDistancias, Eigen::MatrixXd &matrizDistanciasOperadas, int tam){
+vector<elemento> calcularCosteBL(Eigen::MatrixXd &matrizDistancias, int tam){
 
     set <elemento> setSolucion;
     vector<elemento> vectorSolucion;
@@ -361,8 +361,10 @@ vector<elemento> calcularCosteBL(Eigen::MatrixXd &matrizDistancias, Eigen::Matri
 
         while (!hayMejoraIndividual && it != vectorSolucion.end())
         {
+
             for (int i = 0; i < matrizDistancias.cols(); ++i){
                 if (find(vectorSolucion.begin(), vectorSolucion.end(), i) == vectorSolucion.end()){
+                    iteraciones++;
                     contribucionElemento = calcularContribucionElemento(matrizDistancias, i, it->posicion, vectorSolucion);
                     if (contribucionElemento > it->diversidad){
                         elemento elementoMejor = {i, contribucionElemento};
@@ -373,7 +375,6 @@ vector<elemento> calcularCosteBL(Eigen::MatrixXd &matrizDistancias, Eigen::Matri
                     }
                 }
             }
-
             it++;
         }
 
@@ -385,7 +386,6 @@ vector<elemento> calcularCosteBL(Eigen::MatrixXd &matrizDistancias, Eigen::Matri
         if (it == vectorSolucion.end())
             hayMejoraEnVecindario = false;
 
-        iteraciones++;
     }
 
     auto end = std::chrono::system_clock::now();
@@ -408,15 +408,16 @@ int main() {
     cout.setf(ios::fixed);
     int tam; // Tamanio del subconjunto.
 
-    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-a_3_n500_m50.txt", tam);
+    Eigen::MatrixXd matrizDistancias = generarMatrizDistancias("tablas/MDG-c_20_n3000_m600.txt", tam);
     Eigen::MatrixXd matrizDistanciasOperadas = matrizDistancias;
     Eigen::MatrixXd matrizDistanciasOperadas2 = matrizDistancias;
 
     int semilla = leerDeArchivo("semilla.txt");
     Set_random(semilla);
 
-    calcularCosteGreedy(matrizDistancias, matrizDistanciasOperadas, tam);
-    calcularCosteGreedy2(matrizDistancias, matrizDistanciasOperadas2, tam);
-    calcularCosteBL(matrizDistancias, matrizDistanciasOperadas, tam);
+    //calcularCosteGreedy(matrizDistancias, matrizDistanciasOperadas, tam);
+    //calcularCosteGreedy2(matrizDistancias, matrizDistanciasOperadas2, tam);
+    calcularCosteBL(matrizDistancias, tam);
+
 
 }
