@@ -413,14 +413,16 @@ vector<elemento> calcularCosteES(Eigen::MatrixXd &matrizDistancias, int tam){
     const int evaluaciones = 100000;
     const double temperatura_final = 0.001;
     double temperatura;
-    const int max_vecinos = 0.1 * tam;
+    const int max_vecinos = 10 * tam;
     const int max_exitos = 0.1 * max_vecinos;
+    const double M = evaluaciones / max_vecinos;
+    bool hayExitos = true;
 
     set <elemento> setSolucion;
     vector<elemento> vectorSolucion;
     vector<elemento> mejorSolucion;
 
-    //auto start = std::chrono::system_clock::now();
+    auto start = std::chrono::system_clock::now();
 
     while (setSolucion.size() < tam){
         elemento elemento;
@@ -432,68 +434,75 @@ vector<elemento> calcularCosteES(Eigen::MatrixXd &matrizDistancias, int tam){
     factorizarSolucion(setSolucion, matrizDistancias, vectorSolucion);
     mejorSolucion = vectorSolucion;
 
-
     // Calculamos la temperatura inicial.
-    double coste_solucion = calcularCosteSolucion(vectorSolucion, matrizDistancias);
-    cout << coste_solucion << endl;
-    temperatura = (0.3 * coste_solucion)/(-1.0 * log(0.3));
+    double coste_mejor_solucion = calcularCosteSolucion(vectorSolucion, matrizDistancias);
+    cout << coste_mejor_solucion << endl;
+    const double temperatura_inicial = (0.3 * coste_mejor_solucion)/(-1.0 * log(0.3));
+    temperatura = temperatura_inicial;
 
-    cout << "Temperatura inicial:" << temperatura << endl;
-    cout << "Temperatura final: " << temperatura_final;
-
+    cout << "Temperatura inicial:" << temperatura_inicial << endl;
+    cout << "Temperatura final: " << temperatura_final << endl;
 
     int k = 1;
+    double beta = (temperatura_inicial - temperatura_final)/(M * temperatura_inicial * temperatura_final);
 
     do{
 
         int vecinos_generados = 0;
         int exitos = 0;
+        cout << max_vecinos << endl;
+        cout << max_exitos << endl;
 
         while (vecinos_generados < max_vecinos && exitos < max_exitos){
-            // todo vecinos_generados++ y exitos++
             // Seleccionamos un elemento aleatorio de dentro del vector. Cogemos una posicion aleatoria.
-            int elemento_a_extraer = Randint(0, tam - 1);
+            int posicion_elemento_a_extraer = Randint(0, tam - 1);
+            double contribucion_elemento_a_extraer = vectorSolucion[posicion_elemento_a_extraer].diversidad;
+            int elemento_a_extraer = vectorSolucion[posicion_elemento_a_extraer].posicion;
+
+            int elemento_a_incluir;
             do{
-                int elemento_a_incluir = Randint(0, matrizDistancias.cols() - 1);
+                elemento_a_incluir = Randint(0, matrizDistancias.cols() - 1);
             }
-            while (find(vectorSolucion.begin(), vectorSolucion.end(), i) =! vectorSolucion.end());
+            while (find(vectorSolucion.begin(), vectorSolucion.end(), elemento_a_incluir) != vectorSolucion.end());
+            double contribucion_elemento_a_incluir = calcularContribucionElemento(matrizDistancias, elemento_a_incluir, elemento_a_extraer, vectorSolucion);
+
+            vecinos_generados++;
 
             // Calculamos la diferencia de este nuevo elemento al que se va a eliminar.
-            double diferencia = calcularContribucionElemento(matrizDistancias, elemento_a_incluir, vectorSolucion[elemento_a_extraer].posicion, vectorSolucion) - vectorSolucion[elemento_a_extraer].diversidad;
+            double diferencia =  contribucion_elemento_a_extraer - contribucion_elemento_a_incluir;
+            cout << "Diferencia en diversidad = " << diferencia << endl;
 
-            if (diferencia > 0){
-                int antiguo_elemento = vectorSolucion[elemento_a_extraer].posicion;
-                vectorSolucion[elemento_a_extraer] = elemento_a_incluir;
-                refactorizarVector(matrizDistancias, vectorSolucion, elemento_a_incluir, antiguo_elemento);
-                coste_solucion = calcularCosteSolucion(vectorSolucion, matrizDistancias);
-                mejorSolucion = vectorSolucion;
+            if (diferencia < 0 || (Randfloat(0.0,1.0) <= (exp((-1.0 * diferencia/k) * temperatura)))){
+                exitos++;
+                elemento nuevo = {elemento_a_incluir, contribucion_elemento_a_incluir};
+                vectorSolucion[posicion_elemento_a_extraer] = nuevo;
+                refactorizarVector(matrizDistancias, vectorSolucion, elemento_a_incluir, elemento_a_extraer);
+                cout << "Coste de la solucion actual generada: " << calcularCosteSolucion(vectorSolucion, matrizDistancias) << endl;
+                cout << "Coste de la solucion mejor: " << coste_mejor_solucion << endl;
+                if (calcularCosteSolucion(vectorSolucion, matrizDistancias) > coste_mejor_solucion) {
+                    mejorSolucion = vectorSolucion;
+                    coste_mejor_solucion = calcularCosteSolucion(mejorSolucion, matrizDistancias);
+                    cout << coste_mejor_solucion << endl;
+                }
             }
-
-            else if (Randfloat(0,1) <= pow(exp(), ((-1 * diferencia) / (k * temperatura)))){
-                vectorSolucion[elemento_a_extraer] = elemento_a_incluir;
-                refactorizarVector(matrizDistancias, vectorSolucion, elemento_a_incluir, antiguo_elemento);
-            }
-
         }
         // Enfrío.
         k++;
-        // todo enfriar
+        hayExitos = (exitos > 0);
+        // Enfriamos.
+        temperatura = temperatura/(1 + beta * temperatura);
+        cout << "Temperatura nueva: " << temperatura << endl;
 
     }
-    // todo o bien también que el número de evaluacioens es 100000 o bien que el número de exitos es 0.
-    while(temperatura <= temperatura_final);
+    while((temperatura > temperatura_final) && (iteraciones < evaluaciones) && hayExitos);
 
+    auto end = std::chrono::system_clock::now();
+    chrono::duration<double> duration = end - start;
 
+    cout << "Coste de la solucion con ES: " << calcularCosteSolucion(mejorSolucion, matrizDistancias) << endl;
+    cout << "Tiempo de calculo: " << duration.count() << " segundos" << endl << endl;
 
-    //auto end = std::chrono::system_clock::now();
-    //chrono::duration<double> duration = end - start;
-
-    //cout << "Coste de la solucion con BL: " << calcularCosteSolucion(vectorSolucion, matrizDistancias) << endl;
-    //cout << "Tiempo de calculo: " << duration.count() << " segundos" << endl << endl;
-
-
-
-    return vectorSolucion;
+    return mejorSolucion;
 
 }
 
