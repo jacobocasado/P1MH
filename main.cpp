@@ -308,7 +308,6 @@ void factorizarSolucion(set<elemento> &setSolucion, Eigen::MatrixXd &matrizDista
         solucionFactorizada[contador1].posicion = it1->posicion;
 
         for (set<elemento>::iterator it2 = it1; it2 != setSolucion.end(); ++it2){
-            iteraciones++;
             solucionFactorizada[contador1].diversidad += matrizDistancias(it1->posicion, it2->posicion);
             solucionFactorizada[contador2].diversidad += matrizDistancias(it1->posicion, it2->posicion);
             contador2++;
@@ -324,10 +323,10 @@ void factorizarSolucion(set<elemento> &setSolucion, Eigen::MatrixXd &matrizDista
 
 void refactorizarVector(Eigen::MatrixXd &matrizDistancias, vector<elemento> &vectorSolucion, int nuevoElemento, int antiguoElemento){
 
+        iteraciones++;
 
     for (int i = 0; i < vectorSolucion.size(); ++i){
         if(vectorSolucion[i].posicion != nuevoElemento){
-            iteraciones++;
             vectorSolucion[i].diversidad -= matrizDistancias(vectorSolucion[i].posicion, antiguoElemento);
             vectorSolucion[i].diversidad += matrizDistancias(vectorSolucion[i].posicion, nuevoElemento);
         }
@@ -351,8 +350,7 @@ vector<elemento> calcularCosteBL(Eigen::MatrixXd &matrizDistancias, int tam){
     // Llenamos el vector de la primera solucion, incluida la factorizacion de todos los elementos.
     factorizarSolucion(setSolucion, matrizDistancias, vectorSolucion );
 
-    int iteraciones = 0;
-    const int evaluaciones = 100000;
+    const int evaluaciones = 10000;
     bool hayMejoraEnVecindario = true;
     bool hayMejoraIndividual;
 
@@ -369,7 +367,6 @@ vector<elemento> calcularCosteBL(Eigen::MatrixXd &matrizDistancias, int tam){
 
             for (int i = 0; i < matrizDistancias.cols() && !hayMejoraIndividual; ++i){
                 if (find(vectorSolucion.begin(), vectorSolucion.end(), i) == vectorSolucion.end()){
-                    iteraciones++;
                     contribucionElemento = calcularContribucionElemento(matrizDistancias, i, it->posicion, vectorSolucion);
                     if (contribucionElemento > it->diversidad){
                         elemento elementoMejor = {i, contribucionElemento};
@@ -377,6 +374,7 @@ vector<elemento> calcularCosteBL(Eigen::MatrixXd &matrizDistancias, int tam){
                         int antiguoElemento = it->posicion;
                         *it = elementoMejor;
                         refactorizarVector(matrizDistancias, vectorSolucion, it->posicion, antiguoElemento);
+                        iteraciones++;
                     }
                 }
             }
@@ -396,7 +394,7 @@ vector<elemento> calcularCosteBL(Eigen::MatrixXd &matrizDistancias, int tam){
     auto end = std::chrono::system_clock::now();
     chrono::duration<double> duration = end - start;
 
-    cout << calcularCosteSolucion(vectorSolucion, matrizDistancias) << "," << duration.count() << endl;
+    //cout << calcularCosteSolucion(vectorSolucion, matrizDistancias) << "," << duration.count() << endl;
 
 
     /*cout << "Coste de la solucion con BL: " << calcularCosteSolucion(vectorSolucion, matrizDistancias) << endl;
@@ -407,6 +405,123 @@ vector<elemento> calcularCosteBL(Eigen::MatrixXd &matrizDistancias, int tam){
     return vectorSolucion;
 
 }
+
+vector<elemento> BL(vector<elemento> vectorSolucion, Eigen::MatrixXd &matrizDistancias){
+
+    const int evaluaciones = 10000;
+    bool hayMejoraEnVecindario = true;
+    bool hayMejoraIndividual;
+
+    double contribucionElemento;
+
+    vector<elemento>::iterator it = vectorSolucion.begin();
+
+    while (iteraciones < evaluaciones && hayMejoraEnVecindario){
+
+        hayMejoraIndividual = false;
+
+        while (!hayMejoraIndividual && it != vectorSolucion.end())
+        {
+
+            for (int i = 0; i < matrizDistancias.cols() && !hayMejoraIndividual; ++i){
+                if (find(vectorSolucion.begin(), vectorSolucion.end(), i) == vectorSolucion.end()){
+                    contribucionElemento = calcularContribucionElemento(matrizDistancias, i, it->posicion, vectorSolucion);
+                    if (contribucionElemento > it->diversidad){
+                        elemento elementoMejor = {i, contribucionElemento};
+                        hayMejoraIndividual = true;
+                        int antiguoElemento = it->posicion;
+                        *it = elementoMejor;
+                        refactorizarVector(matrizDistancias, vectorSolucion, it->posicion, antiguoElemento);
+                        iteraciones++;
+                    }
+                }
+            }
+            it++;
+        }
+
+        if (hayMejoraIndividual){
+            sort(vectorSolucion.begin(), vectorSolucion.end());
+            it = vectorSolucion.begin();
+        }
+
+        if (it == vectorSolucion.end())
+            hayMejoraEnVecindario = false;
+
+    }
+    return vectorSolucion;
+}
+
+double calcularCosteBMB(Eigen::MatrixXd &matrizDistancias, int tam){
+
+    auto start = std::chrono::system_clock::now();
+    vector<double> solucionesBL;
+
+    for (int i = 0; i < 10; ++i){
+        solucionesBL.push_back(calcularCosteSolucion(calcularCosteBL(matrizDistancias, tam), matrizDistancias));
+        iteraciones = 0;
+    }
+
+    double valorMejorSolucion = 0;
+
+    for (vector<double>::iterator it = solucionesBL.begin(); it != solucionesBL.end(); ++it){
+        if (*it > valorMejorSolucion)
+            valorMejorSolucion = *it;
+    }
+    auto end = std::chrono::system_clock::now();
+    chrono::duration<double> duration = end - start;
+
+    cout << valorMejorSolucion << "," << duration.count() << endl;
+    return valorMejorSolucion;
+}
+
+
+vector<elemento> mutadorILS(vector<elemento> vectorAMutar,Eigen::MatrixXd &matrizDistancias){
+    int num_mutaciones = vectorAMutar.size() * 0.1;
+
+    for (int i = 0; i < num_mutaciones; ++i){
+        int posicion_elemento_a_extraer = Randint(0, vectorAMutar.size() - 1);
+        double contribucion_elemento_a_extraer = vectorAMutar[posicion_elemento_a_extraer].diversidad;
+        int elemento_a_extraer = vectorAMutar[posicion_elemento_a_extraer].posicion;
+
+        int elemento_a_incluir;
+        do{
+            elemento_a_incluir = Randint(0, matrizDistancias.cols() - 1);
+        }
+        while (find(vectorAMutar.begin(), vectorAMutar.end(), elemento_a_incluir) != vectorAMutar.end());
+        double contribucion_elemento_a_incluir = calcularContribucionElemento(matrizDistancias, elemento_a_incluir, elemento_a_extraer, vectorAMutar);
+        elemento nuevo = {elemento_a_incluir, contribucion_elemento_a_incluir};
+        vectorAMutar[posicion_elemento_a_extraer] = nuevo;
+        refactorizarVector(matrizDistancias, vectorAMutar, elemento_a_incluir, elemento_a_extraer);
+    }
+
+    return vectorAMutar;
+}
+
+vector<elemento> calcularCosteILS(Eigen::MatrixXd &matrizDistancias, int tam){
+
+
+    auto start = std::chrono::system_clock::now();
+    vector<elemento> busquedaLocal = calcularCosteBL(matrizDistancias, tam);
+    vector<elemento> mejorSolucion = busquedaLocal;
+    double costeMejorSolucion;
+
+    for(int i = 0; i < 9; ++i){
+        iteraciones = 0;
+        vector<elemento> mejorMutado = mutadorILS(mejorSolucion, matrizDistancias);
+        vector<elemento> mejorMutadoBL = BL(mejorMutado, matrizDistancias);
+        double costeMejorMutadoBL = calcularCosteSolucion(mejorMutadoBL, matrizDistancias);
+
+        if (costeMejorMutadoBL > costeMejorSolucion){
+            costeMejorSolucion = costeMejorMutadoBL;
+            mejorSolucion = mejorMutadoBL;
+        }
+    }
+    auto end = std::chrono::system_clock::now();
+    chrono::duration<double> duration = end - start;
+    cout << costeMejorSolucion << "," << duration.count() << endl;
+    return mejorSolucion;
+}
+
 
 vector<elemento> calcularCosteES(Eigen::MatrixXd &matrizDistancias, int tam){
 
@@ -440,16 +555,14 @@ vector<elemento> calcularCosteES(Eigen::MatrixXd &matrizDistancias, int tam){
     const double temperatura_inicial = (0.3 * coste_mejor_solucion)/(-1.0 * log(0.3));
     temperatura = temperatura_inicial;
 
-    cout << "Temperatura inicial:" << temperatura_inicial << endl;
-    cout << "Temperatura final: " << temperatura_final << endl;
-
     int k = 1;
     double beta = (temperatura_inicial - temperatura_final)/(M * temperatura_inicial * temperatura_final);
+    int vecinos_generados = 0;
+    int exitos = 0;
 
     do{
-
-        int vecinos_generados = 0;
-        int exitos = 0;
+        vecinos_generados = 0;
+        exitos = 0;
         cout << max_vecinos << endl;
         cout << max_exitos << endl;
 
@@ -470,15 +583,13 @@ vector<elemento> calcularCosteES(Eigen::MatrixXd &matrizDistancias, int tam){
 
             // Calculamos la diferencia de este nuevo elemento al que se va a eliminar.
             double diferencia =  contribucion_elemento_a_extraer - contribucion_elemento_a_incluir;
-            cout << "Diferencia en diversidad = " << diferencia << endl;
 
             if (diferencia < 0 || (Randfloat(0.0,1.0) <= (exp((-1.0 * diferencia/k) * temperatura)))){
                 exitos++;
                 elemento nuevo = {elemento_a_incluir, contribucion_elemento_a_incluir};
                 vectorSolucion[posicion_elemento_a_extraer] = nuevo;
                 refactorizarVector(matrizDistancias, vectorSolucion, elemento_a_incluir, elemento_a_extraer);
-                cout << "Coste de la solucion actual generada: " << calcularCosteSolucion(vectorSolucion, matrizDistancias) << endl;
-                cout << "Coste de la solucion mejor: " << coste_mejor_solucion << endl;
+
                 if (calcularCosteSolucion(vectorSolucion, matrizDistancias) > coste_mejor_solucion) {
                     mejorSolucion = vectorSolucion;
                     coste_mejor_solucion = calcularCosteSolucion(mejorSolucion, matrizDistancias);
@@ -488,13 +599,12 @@ vector<elemento> calcularCosteES(Eigen::MatrixXd &matrizDistancias, int tam){
         }
         // Enfrío.
         k++;
-        hayExitos = (exitos > 0);
+
         // Enfriamos.
         temperatura = temperatura/(1 + beta * temperatura);
-        cout << "Temperatura nueva: " << temperatura << endl;
 
     }
-    while((temperatura > temperatura_final) && (iteraciones < evaluaciones) && hayExitos);
+    while((temperatura > temperatura_final) && (iteraciones < evaluaciones) && (exitos > 0));
 
     auto end = std::chrono::system_clock::now();
     chrono::duration<double> duration = end - start;
@@ -524,8 +634,8 @@ int main(int argc, char* argv[]) {
 
 //    calcularCosteGreedy(matrizDistancias, matrizDistanciasOperadas, tam);
 //    calcularCosteGreedy2(matrizDistancias, matrizDistanciasOperadas2, tam);
- //calcularCosteBL(matrizDistancias, tam);
-    calcularCosteES(matrizDistancias,tam);
-
-
+// calcularCosteBL(matrizDistancias, tam);
+    //calcularCosteES(matrizDistancias,tam);
+//calcularCosteBMB(matrizDistancias,tam);
+calcularCosteILS(matrizDistancias,tam);
 }
